@@ -235,5 +235,28 @@ class CheckTests(unittest.TestCase):
         self.assertTrue(self._check({"value_pct": 14.0}))
 
 
+
+class DailySeriesTests(unittest.TestCase):
+    """ЦБ может отдавать ставку на каждый день: дата изменения это начало последнего отрезка."""
+
+    def test_daily_rows_give_start_of_run(self):
+        days = [(D(2026, 7, 20) + dt.timedelta(days=i)) for i in range(0, 100)]
+        pairs = [(d, 15.0 if d < D(2026, 7, 27) else 14.0) for d in days]
+        self.assertEqual(u._latest_run(pairs), (D(2026, 7, 27), 14.0))
+
+    def test_unchanged_over_whole_window_is_unknown(self):
+        pairs = [(D(2025, 9, 22) + dt.timedelta(days=i), 14.0) for i in range(400)]
+        self.assertEqual(u._latest_run(pairs), (None, 14.0))
+
+    def test_single_row_keeps_its_date(self):
+        self.assertEqual(u._latest_run([(D(2026, 7, 27), 14.0)]), (D(2026, 7, 27), 14.0))
+
+    def test_unknown_start_falls_back_to_previous_date(self):
+        res = [{"source": "soap", "value_pct": 14.0, "effective_since": None, "meeting": None}]
+        prev = {"value_pct": 14.0, "effective_since": "2026-07-27", "confirmed_at": "2026-10-28"}
+        kr, _ = u.reconcile_key_rate(res, [], prev, TODAY)
+        self.assertEqual(kr["effective_since"], "2026-07-27")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
