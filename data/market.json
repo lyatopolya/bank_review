@@ -1,21 +1,23 @@
 {
-  "generated_at": "2026-10-28T14:44:26+00:00",
+  "generated_at": "2026-10-29T21:54:03+00:00",
   "key_rate": {
     "value_pct": 14.0,
-    "effective_since": "2026-07-27",
-    "confirmed_at": "2026-10-27",
+    "effective_since": "2026-10-29",
+    "confirmed_at": "2026-10-29",
     "last_meeting": {
       "date": "2026-10-23",
       "decision": "сохранена"
     },
     "sources": [
-      "cbr.ru/press/keypr (проверено вручную)"
+      "soap",
+      "table",
+      "press"
     ],
     "status": "ok"
   },
   "summary": {
     "programs": 9,
-    "stale_programs": 2,
+    "stale_programs": 0,
     "lowest_rate_pct": 16.9,
     "lowest_rate_spread_over_key_pct": 2.9
   },
@@ -38,9 +40,10 @@
       "fees": "Комиссии на странице не указаны. Страхование имущества обязательно, личное по желанию.",
       "source_url": "https://finuslugi.ru/ipoteka/sberbank_kommercheskaya_ipoteka",
       "checked": "2026-10-22",
-      "age_days": 6,
+      "age_days": 7,
       "stale": false,
-      "notes": "Источник — Финуслуги, не сайт банка. В описании программы встречается слово «жильё», тип объекта уточнить. Заявка только на сайте банка."
+      "notes": "Источник — Финуслуги, не сайт банка. В описании программы встречается слово «жильё», тип объекта уточнить. Заявка только на сайте банка.",
+      "verification": "unsupported"
     },
     {
       "bank": "Альфа-Банк",
@@ -59,10 +62,12 @@
       "insurance_required": "Уточнить",
       "fees": "Без штрафа за досрочное погашение. Лимит 100 млн в Москве, МО, СПб и ЛО; Сочи до 70 млн; другие регионы до 35 млн.",
       "source_url": "https://ru.myfin.by/bank/alfabank/ipoteka/kommerceskaa-nedvizimost-13",
-      "checked": "2026-10-19",
-      "age_days": 9,
+      "checked": "2026-10-29",
+      "age_days": 0,
       "stale": false,
-      "notes": "Источник — myfin.by. Взнос на странице не указан. Срок от 3 до 30 лет."
+      "notes": "Источник — myfin.by. Взнос на странице не указан. Срок от 3 до 30 лет.",
+      "verification": "ok",
+      "checked_in_base": "2026-10-19"
     },
     {
       "bank": "Совкомбанк",
@@ -81,10 +86,12 @@
       "insurance_required": "Уточнить",
       "fees": "Без штрафа за досрочное погашение. Решение за 24 часа.",
       "source_url": "https://ru.myfin.by/bank/sovcombank/ipoteka/kommerceskaa-nedvizimost-na-vtoricnom-rynke",
-      "checked": "2026-10-02",
-      "age_days": 26,
-      "stale": true,
-      "notes": "Источник — myfin.by (данные от 02.10), взнос 15% по карточке Финуслуг от 23.10. Только в городах с населением более 300 тыс. Срок от 5 лет."
+      "checked": "2026-10-29",
+      "age_days": 0,
+      "stale": false,
+      "notes": "Источник — myfin.by (данные от 02.10), взнос 15% по карточке Финуслуг от 23.10. Только в городах с населением более 300 тыс. Срок от 5 лет.",
+      "verification": "ok",
+      "checked_in_base": "2026-10-02"
     },
     {
       "bank": "Сбербанк",
@@ -103,10 +110,12 @@
       "insurance_required": "Уточнить",
       "fees": "Без штрафа за досрочное погашение. Решение около 72 часов.",
       "source_url": "https://ru.myfin.by/bank/sberbank/ipoteka/kredit-na-garaz-ili-masino-mesto",
-      "checked": "2026-08-31",
-      "age_days": 58,
-      "stale": true,
-      "notes": "Источник — myfin.by (данные от 31.08.2026). Минимальный взнос на странице не указан. Объект заложен в банк."
+      "checked": "2026-10-29",
+      "age_days": 0,
+      "stale": false,
+      "notes": "Источник — myfin.by (данные от 31.08.2026). Минимальный взнос на странице не указан. Объект заложен в банк.",
+      "verification": "ok",
+      "checked_in_base": "2026-08-31"
     },
     {
       "bank": "Альфа-Банк",
@@ -125,10 +134,12 @@
       "insurance_required": "Уточнить",
       "fees": "Без штрафа за досрочное погашение. Решение за 72 часа.",
       "source_url": "https://ru.myfin.by/bank/alfabank/ipoteka/masino-mesto-2",
-      "checked": "2026-10-19",
-      "age_days": 9,
+      "checked": "2026-10-29",
+      "age_days": 0,
       "stale": false,
-      "notes": "Источник — myfin.by. Взнос и условия страхования на странице не раскрыты. Срок от 3 до 30 лет."
+      "notes": "Источник — myfin.by. Взнос и условия страхования на странице не раскрыты. Срок от 3 до 30 лет.",
+      "verification": "ok",
+      "checked_in_base": "2026-10-19"
     },
     {
       "bank": "Совкомбанк",
@@ -147,10 +158,12 @@
       "insurance_required": "Уточнить",
       "fees": "Условия на странице не уточнены.",
       "source_url": "https://ru.myfin.by/bank/sovcombank/ipoteka/pokupka-zila-na-vtoricnom-rynke",
-      "checked": "2026-10-27",
-      "age_days": 1,
+      "checked": "2026-10-29",
+      "age_days": 0,
       "stale": false,
-      "notes": "Источник — myfin.by (страница списка от 27.10.2026). Условия сдачи в аренду и страхования на странице не проверены."
+      "notes": "Источник — myfin.by (страница списка от 27.10.2026). Условия сдачи в аренду и страхования на странице не проверены.",
+      "verification": "ok",
+      "checked_in_base": "2026-10-27"
     },
     {
       "bank": "Т-Банк",
@@ -169,10 +182,12 @@
       "insurance_required": "Уточнить",
       "fees": "Условия на странице не уточнены.",
       "source_url": "https://ru.myfin.by/bank/tcs/ipoteka/kvartira-na-vtoricnom-rynke-3",
-      "checked": "2026-10-27",
-      "age_days": 1,
+      "checked": "2026-10-29",
+      "age_days": 0,
       "stale": false,
-      "notes": "Источник — myfin.by (страница списка от 27.10.2026). Условия сдачи в аренду и страхования на странице не проверены."
+      "notes": "Источник — myfin.by (страница списка от 27.10.2026). Условия сдачи в аренду и страхования на странице не проверены.",
+      "verification": "ok",
+      "checked_in_base": "2026-10-27"
     },
     {
       "bank": "Альфа-Банк",
@@ -191,10 +206,12 @@
       "insurance_required": "Уточнить",
       "fees": "Без штрафа за досрочное погашение. Лимит 100 млн в Москве, МО, СПб и ЛО; Сочи до 70 млн; другие регионы до 35 млн.",
       "source_url": "https://ru.myfin.by/bank/alfabank/ipoteka/kredit-na-kvartiru",
-      "checked": "2026-10-19",
-      "age_days": 9,
+      "checked": "2026-10-29",
+      "age_days": 0,
       "stale": false,
-      "notes": "Источник — myfin.by (данные от 19.10.2026). Взнос на странице не указан."
+      "notes": "Источник — myfin.by (данные от 19.10.2026). Взнос на странице не указан.",
+      "verification": "ok",
+      "checked_in_base": "2026-10-19"
     },
     {
       "bank": "Банк «Санкт-Петербург»",
@@ -214,9 +231,10 @@
       "fees": "Условия на странице не указаны.",
       "source_url": "https://www.sravni.ru/ipoteka/kommercheskaja",
       "checked": "2026-10-28",
-      "age_days": 0,
+      "age_days": 1,
       "stale": false,
-      "notes": "Источник — Сравни.ру, дата проверки — день, когда страница была прочитана, самой даты обновления на странице нет. Срок, минимальная сумма и сдача в аренду на странице не указаны."
+      "notes": "Источник — Сравни.ру, дата проверки — день, когда страница была прочитана, самой даты обновления на странице нет. Срок, минимальная сумма и сдача в аренду на странице не указаны.",
+      "verification": "unsupported"
     }
   ],
   "warnings": []
