@@ -1,0 +1,93 @@
+name: Обновить данные и опубликовать сайт
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "baza-bankov.xlsx"
+      - "index.html"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      fresh: ${{ steps.check.outputs.fresh }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Установить зависимости
+        run: pip install -r requirements.txt
+
+      - name: Проверить скрипт
+        run: python -m unittest discover -s tests
+
+      - name: Сверить ставки с источниками
+        continue-on-error: true
+        run: python verify_sources.py
+
+      - name: Обновить data/market.json
+        run: python update_data.py
+
+      - name: Проверить свежесть ставки ЦБ
+        id: check
+        run: |
+          if python update_data.py --check; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Сохранить изменения в репозитории
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add data/market.json
+          if [ -f data/verification.json ]; then git add data/verification.json; fi
+          git diff --staged --quiet || git commit -m "Обновить данные рынка"
+          git push
+
+      - name: Собрать сайт
+        run: |
+          mkdir _site
+          cp index.html _site/
+          cp -r data _site/data
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  alert:
+    needs: [update, deploy]
+    if: ${{ always() && needs.update.outputs.fresh == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Сообщить о неподтверждённой ставке
+        run: |
+          echo "::error::Ставка ЦБ не подтверждена свежими данными. Сверьте её на cbr.ru и посмотрите журнал шагов «Обновить data/market.json» и «Проверить свежесть ставки ЦБ»."
+          exit 1
