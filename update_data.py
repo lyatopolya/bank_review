@@ -70,8 +70,25 @@ def _collect_pairs(root):
     return pairs
 
 
+def _latest_run(pairs):
+    """Пары (дата, ставка) -> (дата, ставка), где дата это начало последнего отрезка с той же ставкой.
+
+    ЦБ может отдавать ставку на каждый день, а не только на дни изменения, поэтому «самая поздняя
+    дата в ответе» не значит «ставку изменили в этот день». Если отрезок тянется до самого начала
+    запрошенного окна, настоящее начало неизвестно: возвращаем None, и дата берётся из прошлого запуска.
+    """
+    pairs = sorted(set(pairs))
+    i = len(pairs) - 1
+    rate = pairs[i][1]
+    while i > 0 and abs(pairs[i - 1][1] - rate) < 1e-9:
+        i -= 1
+    if i == 0 and len(pairs) > 1:
+        return None, rate
+    return pairs[i][0], rate
+
+
 def parse_key_rate(xml_text: str):
-    """Ответ веб-сервиса ЦБ (KeyRateXML) -> последняя пара (дата начала действия, ставка)."""
+    """Ответ веб-сервиса ЦБ (KeyRateXML) -> (дата начала действия текущей ставки, ставка)."""
     root = ET.fromstring(xml_text)
     pairs = _collect_pairs(root)
     if not pairs:  # результат мог прийти текстом с экранированным XML
@@ -81,7 +98,7 @@ def parse_key_rate(xml_text: str):
                 break
     if not pairs:
         raise ValueError("в ответе ЦБ не нашлось пар «дата, ставка»")
-    return max(pairs, key=lambda p: p[0])
+    return _latest_run(pairs)
 
 
 def _strip_tags(html: str) -> str:
@@ -105,7 +122,7 @@ def parse_key_rate_table(html: str, today: dt.date):
             pairs.append((d, rate))
     if not pairs:
         raise ValueError("в таблице ЦБ не нашлось пар «дата, ставка»")
-    return max(pairs, key=lambda p: p[0])
+    return _latest_run(pairs)
 
 
 _PRESS_RE = re.compile(
