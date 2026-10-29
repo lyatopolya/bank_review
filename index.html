@@ -1,0 +1,1126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<style>:root{color-scheme:light}</style>
+<title>Окупаемость недвижимости</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: цели сверху, форма слева, ответ справа; на телефоне ответ идёт первым и закреплён компактной полосой */
+:root {
+  --bg: #F2F4F8;
+  --surface: #FFFFFF;
+  --line: #D8DDE6;
+  --fg: #141A25;
+  --muted: #586174;
+  --accent: #2446B5;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E4EAFB;
+  --good: #17794A;
+  --good-soft: #E1F3E9;
+  --warn: #8A5A00;
+  --warn-soft: #FBF0D6;
+  --bad: #B02A1B;
+  --bad-soft: #FBE4E0;
+  --bar-cost: #B9C1CF;
+  --font-ui: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E121A; --surface: #161B25; --line: #29303F; --fg: #E7EAF1; --muted: #98A1B3;
+    --accent: #8DA6FF; --accent-ink: #0E121A; --accent-soft: #1F2845;
+    --good: #5CCB94; --good-soft: #14281F; --warn: #E5B04A; --warn-soft: #2B2312;
+    --bad: #FF8A7A; --bad-soft: #301A17; --bar-cost: #3A4356;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E121A; --surface: #161B25; --line: #29303F; --fg: #E7EAF1; --muted: #98A1B3;
+  --accent: #8DA6FF; --accent-ink: #0E121A; --accent-soft: #1F2845;
+  --good: #5CCB94; --good-soft: #14281F; --warn: #E5B04A; --warn-soft: #2B2312;
+  --bad: #FF8A7A; --bad-soft: #301A17; --bar-cost: #3A4356;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  background: var(--bg); z-index: 10;
+}
+.page {
+  max-width: 1080px; margin: 0 auto;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 6px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.lead { margin: 0 0 18px; color: var(--muted); max-width: 64ch; }
+h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 12px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+
+/* market strip */
+.market { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.tile { padding: 12px 16px; }
+.tile .k { font-size: 0.8rem; color: var(--muted); margin: 0 0 2px; }
+.tile .v { font-size: 1.25rem; font-weight: 500; margin: 0; }
+.tile .n { font-size: 0.78rem; color: var(--muted); margin: 4px 0 0; line-height: 1.4; }
+.tile .n span { display: block; }
+.tile .n .w { color: var(--warn); font-weight: 500; }
+
+/* goal tabs */
+.goals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; }
+.goal {
+  font: inherit; text-align: left; cursor: pointer; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.goal b { font-weight: 600; font-size: 0.98rem; }
+.goal span { font-size: 0.82rem; color: var(--muted); }
+.goal[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.goal[aria-pressed="true"] b { color: var(--accent); }
+.goal:focus-visible, .chipbtn:focus-visible, .btn:focus-visible, .cta:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.goal-note { margin: 0 0 18px; color: var(--muted); font-size: 0.9rem; max-width: 70ch; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend { padding: 0; }
+.kgroup { margin: 14px 0 6px; font-size: 0.84rem; font-weight: 600; }
+.kgroup:first-of-type { margin-top: 0; }
+.kgroup small { font-weight: 400; color: var(--muted); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label {
+  display: block; text-align: center; padding: 9px 8px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 0.9rem; cursor: pointer; color: var(--fg); background: var(--surface);
+}
+.seg label.wide { grid-column: 1 / -1; }
+.seg input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint-note { font-size: 0.82rem; color: var(--muted); margin: 10px 0 0; }
+
+.group { display: flex; flex-direction: column; gap: 14px; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--line); }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field label { font-size: 0.88rem; font-weight: 500; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.field output { font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 500; }
+.help { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+input[type="number"] {
+  width: 100%; min-width: 0; font: inherit; font-family: var(--font-num); font-variant-numeric: tabular-nums;
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg);
+}
+input[type="number"]:focus-visible, input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 4px 0 0; }
+.chiprow { display: flex; flex-wrap: wrap; gap: 6px; }
+.chipbtn {
+  font: inherit; font-size: 0.8rem; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+}
+.chipbtn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.more { font-size: 0.82rem; color: var(--muted); }
+.more summary { cursor: pointer; color: var(--accent); }
+.more div { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
+.more p { margin: 0; }
+
+.mini { display: none; }
+
+.verdict { border-radius: 12px; padding: 20px; background: var(--st-soft); border: 1px solid var(--st); color: var(--fg); }
+.verdict[data-state="good"] { --st: var(--good); --st-soft: var(--good-soft); }
+.verdict[data-state="warn"] { --st: var(--warn); --st-soft: var(--warn-soft); }
+.verdict[data-state="bad"]  { --st: var(--bad);  --st-soft: var(--bad-soft); }
+.verdict .tag { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--st); margin: 0 0 6px; }
+.verdict .head { font-size: 1.45rem; line-height: 1.25; font-weight: 700; margin: 0 0 8px; text-wrap: balance; }
+.verdict .sub { margin: 0; max-width: 64ch; }
+.verdict .sub + .sub { margin-top: 8px; }
+.levers { margin: 12px 0 0; padding: 12px 0 0; border-top: 1px solid var(--st); }
+.levers h3 { margin: 0 0 6px; font-size: 0.9rem; }
+.levers ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 4px; max-width: 64ch; }
+
+.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.metric { padding: 14px 16px; }
+.metric .k { font-size: 0.82rem; color: var(--muted); margin: 0 0 4px; }
+.metric .v { font-size: 1.35rem; font-weight: 500; margin: 0; overflow-wrap: anywhere; }
+.metric .v.neg { color: var(--bad); }
+.metric .v.pos { color: var(--good); }
+.metric .n { font-size: 0.78rem; color: var(--muted); margin: 6px 0 0; line-height: 1.4; }
+
+.bar { position: relative; display: flex; height: 18px; border-radius: 6px; overflow: hidden; background: var(--bg); border: 1px solid var(--line); }
+.bar span { display: block; height: 100%; min-width: 0; }
+.bar .s-cost { background: var(--bar-cost); }
+.bar .s-pay { background: var(--accent); }
+.bar .s-rest { background: var(--good); }
+.mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; padding: 0; list-style: none; font-size: 0.86rem; }
+.legend li { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.bar-note { margin: 10px 0 0; font-size: 0.82rem; color: var(--muted); }
+.sub-h { margin: 18px 0 8px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--muted); font-size: 0.8rem; }
+tr.cur td { background: var(--accent-soft); font-weight: 600; }
+td.pos { color: var(--good); }
+td.neg { color: var(--bad); }
+.fine { font-size: 0.78rem; color: var(--muted); margin: 0; line-height: 1.5; }
+
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0 0 10px; }
+.compare div { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+.compare .k { font-size: 0.78rem; color: var(--muted); margin: 0; }
+.compare .v { margin: 2px 0 0; font-size: 1.05rem; }
+.tips { margin: 0 0 8px; font-size: 0.9rem; max-width: 64ch; }
+.cta {
+  font: inherit; font-weight: 600; cursor: pointer; border: 0; border-radius: 10px; padding: 12px 16px;
+  background: var(--accent); color: var(--accent-ink);
+}
+.cta:hover { opacity: 0.92; }
+
+.progs { list-style: none; margin: 0; padding: 0; }
+.prog { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.prog:first-child { border-top: 0; padding-top: 0; }
+.prog.dim { opacity: 0.72; }
+.prog h3 { font-size: 1rem; margin: 0; font-weight: 600; }
+.prog .psub { color: var(--muted); font-size: 0.85rem; margin: 2px 0 0; }
+.prog .cf { text-align: right; }
+.prog .cf b { display: block; font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 1.1rem; font-weight: 500; }
+.prog .cf b.pos { color: var(--good); }
+.prog .cf b.neg { color: var(--bad); }
+.prog .cf small { color: var(--muted); font-size: 0.76rem; }
+.prog .rest { grid-column: 1 / -1; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.chip { font-size: 0.76rem; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.chip.ok { color: var(--good); background: var(--good-soft); border-color: transparent; }
+.chip.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+.chip.bad { color: var(--bad); background: var(--bad-soft); border-color: transparent; }
+.prog .cond { font-size: 0.84rem; margin: 0 0 8px; overflow-wrap: anywhere; }
+.prog .foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 0.78rem; color: var(--muted); }
+.btn { font: inherit; font-size: 0.82rem; padding: 5px 11px; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 8px; cursor: pointer; }
+.btn:hover { background: var(--accent-soft); }
+.empty { margin: 0; color: var(--muted); font-size: 0.9rem; max-width: 60ch; }
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .results { order: -1; }
+  h1 { font-size: 1.35rem; }
+  .goals { grid-template-columns: minmax(0, 1fr); }
+  .goal { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .mini {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+    background: var(--surface); border: 1px solid var(--st, var(--line)); border-radius: 10px;
+    padding: 9px 12px; margin-bottom: 14px; font-size: 0.9rem;
+  }
+  .mini[data-state="good"] { --st: var(--good); }
+  .mini[data-state="warn"] { --st: var(--warn); }
+  .mini[data-state="bad"]  { --st: var(--bad); }
+  .mini .t { font-weight: 600; color: var(--st); min-width: 0; }
+  .mini .c { white-space: nowrap; }
+}
+@media (max-width: 480px) {
+  .metrics { grid-template-columns: minmax(0, 1fr); }
+  .row2, .compare { grid-template-columns: minmax(0, 1fr); }
+  .prog { grid-template-columns: minmax(0, 1fr); }
+  .prog .cf { text-align: left; }
+  .goal { flex-direction: column; gap: 2px; }
+  table { font-size: 0.82rem; }
+  th, td { padding: 8px 5px; }
+  th { white-space: normal; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .verdict, .mini, .goal { transition: background-color .2s, border-color .2s; }
+}
+.chip.ad { background: var(--accent-soft); color: var(--accent); }
+.btn.solid { background: var(--accent); color: var(--bg); }
+.group .row2 { margin-top: 4px; }
+td.pk { color: var(--muted); }
+td.pk small { display: block; font-size: 0.74rem; }
+@media print { .goals, #market, #progsBox button, #printBtn, .cta, details.more { display: none !important; } body { background: #fff; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <h1>Окупаемость недвижимости</h1>
+    <p class="lead">Посчитайте, потянете ли вы покупку и окупится ли она. Специальных знаний не нужно: выберите, что вам нужно, и введите цифры из объявлений.</p>
+  </header>
+
+  <section class="market" id="market" aria-label="Данные рынка">
+    <div class="panel tile"><p class="k">Ключевая ставка Банка России</p><p class="v num" id="tKey">—</p><p class="n" id="tKeyN">Загружаю данные…</p></div>
+    <div class="panel tile"><p class="k" id="tBestK">Самая низкая ставка в базе</p><p class="v num" id="tBest">—</p><p class="n" id="tBestN"></p></div>
+    <div class="panel tile"><p class="k">Данные обновлены</p><p class="v num" id="tGen">—</p><p class="n" id="tGenN"></p></div>
+  </section>
+
+  <div class="goals" id="goals" role="group" aria-label="Что вы хотите посчитать">
+    <button type="button" class="goal" data-mode="rent" aria-pressed="true"><b>Купить и сдавать</b><span>Хватит ли аренды на платёж</span></button>
+    <button type="button" class="goal" data-mode="self" aria-pressed="false"><b>Купить для своего дела</b><span>Покупка или аренда помещения</span></button>
+    <button type="button" class="goal" data-mode="budget" aria-pressed="false"><b>Сколько я могу потянуть</b><span>Какой объект по карману</span></button>
+  </div>
+  <p class="goal-note" id="goalNote"></p>
+
+  <div class="mini" id="mini" data-state="bad" aria-live="polite">
+    <span class="t" id="miniT">—</span>
+    <span class="c num" id="miniC">—</span>
+  </div>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel" aria-label="Параметры">
+        <fieldset>
+          <legend><h2>Что покупаете</h2></legend>
+          <p class="kgroup">Жильё</p>
+          <div class="seg">
+            <input type="radio" name="kind" id="k-flat" value="flat"><label class="wide" for="k-flat">Квартира или дом</label>
+          </div>
+          <p class="kgroup">Коммерческая недвижимость <small>помещения, которые сдают бизнесу</small></p>
+          <div class="seg">
+            <input type="radio" name="kind" id="k-shop" value="shop"><label class="wide" for="k-shop">Магазин, офис, услуги</label>
+            <input type="radio" name="kind" id="k-wh" value="warehouse" checked><label for="k-wh">Склад или ангар</label>
+            <input type="radio" name="kind" id="k-prod" value="production"><label for="k-prod">Производство</label>
+          </div>
+          <p class="kgroup">Гараж</p>
+          <div class="seg">
+            <input type="radio" name="kind" id="k-gar" value="garage"><label class="wide" for="k-gar">Гараж или машино-место</label>
+          </div>
+          <p class="hint-note" id="kindHint"></p>
+        </fieldset>
+
+        <div class="group" data-modes="rent self">
+          <h2>Объект</h2>
+          <div class="field">
+            <label for="price">Цена объекта, ₽</label>
+            <input type="number" id="price" inputmode="decimal" min="0" step="100000">
+          </div>
+          <div class="field">
+            <label for="area">Площадь, м² <span class="help">по желанию</span></label>
+            <input type="number" id="area" inputmode="decimal" min="0" step="1">
+            <span class="help">Нужна, чтобы сверить цену и аренду с объявлениями.</span>
+          </div>
+        </div>
+
+        <div class="group" data-modes="rent">
+          <h2>Аренда и расходы</h2>
+          <div class="field">
+            <label for="rent">Аренда в месяц, ₽</label>
+            <input type="number" id="rent" inputmode="decimal" min="0" step="1000">
+            <span class="help">Откройте 5–10 объявлений о похожих объектах рядом и возьмите среднюю цену, а не самую высокую.</span>
+          </div>
+          <div class="field">
+            <label for="vac">Простой, месяцев в год</label>
+            <input type="number" id="vac" inputmode="decimal" min="0" max="12" step="0.5">
+            <span class="help">Сколько месяцев в году объект стоит без арендатора. Не ставьте ноль: между арендаторами он всегда какое-то время пустует.</span>
+          </div>
+          <div class="field">
+            <label for="exp">Расходы, % от аренды</label>
+            <input type="number" id="exp" inputmode="decimal" min="0" max="80" step="1">
+            <span class="help">Ремонт, коммунальные платежи, управление, страховка. Если не знаете, оставьте подставленное значение.</span>
+          </div>
+          <div class="field">
+            <label for="tax">Налог с аренды, %</label>
+            <div class="chiprow" id="taxChips">
+              <button type="button" class="chipbtn" data-tax="13">Физлицо 13%</button>
+              <button type="button" class="chipbtn" data-tax="15">Физлицо 15%</button>
+              <button type="button" class="chipbtn" data-tax="6">ИП на УСН 6%</button>
+              <button type="button" class="chipbtn" data-tax="4" id="taxSelfBtn">Самозанятый 4%</button>
+            </div>
+            <input type="number" id="tax" inputmode="decimal" min="0" max="40" step="1">
+            <details class="more">
+              <summary>Какой налог выбрать</summary>
+              <div>
+                <p><b>Физлицо.</b> 13% с дохода за год до 2,4 млн ₽. Считается весь ваш доход, включая зарплату, а с части выше этой суммы ставка 15% и больше. Налог платите сами по декларации.</p>
+                <p><b>ИП на УСН «доходы».</b> До 6%, в некоторых регионах ниже. ИП дополнительно платит страховые взносы, здесь они не учтены.</p>
+                <p><b>Самозанятый.</b> 4% с физлиц и 6% с организаций, доход до 2,4 млн ₽ в год. Через этот режим можно сдавать жильё. Для нежилых помещений такое право, по найденным нами данным, пока было только в законопроекте, проверьте действующие правила.</p>
+                <p>Это общая справка, а не налоговая консультация.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="group" data-modes="self">
+          <h2>Ваши расходы</h2>
+          <div class="field">
+            <label for="rentNow">Аренда такого помещения, ₽ в месяц</label>
+            <input type="number" id="rentNow" inputmode="decimal" min="0" step="1000">
+            <span class="help">Сколько вы платили бы, если бы снимали. Возьмите цену из объявлений о похожих помещениях.</span>
+          </div>
+          <div class="field">
+            <label for="ownCost">Расходы владельца, % от цены в год</label>
+            <input type="number" id="ownCost" inputmode="decimal" min="0" max="30" step="0.5">
+            <span class="help">Налог на имущество, ремонт, страховка. Коммунальные платежи вы платите и при аренде, их считать не нужно.</span>
+          </div>
+        </div>
+
+        <div class="group" data-modes="budget">
+          <h2>Ваш бюджет</h2>
+          <div class="field">
+            <label for="own">Свои деньги, ₽</label>
+            <input type="number" id="own" inputmode="decimal" min="0" step="100000">
+            <span class="help">Всё, что готовы вложить: на первоначальный взнос и разовые расходы.</span>
+          </div>
+          <div class="field">
+            <label for="payM">Комфортный платёж по кредиту, ₽ в месяц</label>
+            <input type="number" id="payM" inputmode="decimal" min="0" step="5000">
+            <span class="help">Сумма, которую вы спокойно платили бы банку каждый месяц, даже если доход упадёт.</span>
+          </div>
+          <div class="field">
+            <label for="minDown">Минимальный взнос, % от цены</label>
+            <input type="number" id="minDown" inputmode="decimal" min="0" max="90" step="1">
+            <span class="help">Для нежилых объектов банки часто просят больше, чем для квартир. Точное значение смотрите в условиях банка.</span>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Кредит</h2>
+          <div class="field" data-modes="rent self">
+            <label for="down">Первоначальный взнос <output id="downO" for="down"></output></label>
+            <input type="range" id="down" min="0" max="100" step="1">
+            <div class="chiprow"><button type="button" class="chipbtn" id="noLoan">Без кредита</button></div>
+          </div>
+          <div class="field">
+            <label for="rate">Ставка по кредиту <output id="rateO" for="rate"></output></label>
+            <input type="range" id="rate" min="1" max="35" step="0.1">
+            <span class="help" id="rateHelp"></span>
+          </div>
+          <div class="field">
+            <label for="term">Срок <output id="termO" for="term"></output></label>
+            <input type="range" id="term" min="1" max="30" step="1">
+          </div>
+          <div class="field">
+            <label for="upfront">Разовые расходы на покупку, % от цены</label>
+            <input type="number" id="upfront" inputmode="decimal" min="0" max="30" step="0.5">
+            <span class="help">Оформление, оценка, страховка, ремонт и подготовка к сдаче. Новички часто забывают эти деньги.</span>
+          </div>
+        </div>
+        <div class="group" data-modes="rent">
+          <h2>Допущения для IRR</h2>
+          <div class="row2">
+            <div class="field"><label for="growR">Рост аренды, % в год</label><input type="number" id="growR" inputmode="decimal" min="-20" max="30" step="0.5"></div>
+            <div class="field"><label for="growP">Рост цены, % в год</label><input type="number" id="growP" inputmode="decimal" min="-20" max="30" step="0.5"></div>
+            <div class="field"><label for="hold">Срок владения, лет</label><input type="number" id="hold" inputmode="numeric" min="1" max="30" step="1"></div>
+            <div class="field"><label for="sellCost">Расходы при продаже, %</label><input type="number" id="sellCost" inputmode="decimal" min="0" max="20" step="0.5"></div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <div class="col results">
+      <section class="verdict" id="verdict" data-state="bad" aria-live="polite">
+        <p class="tag">Итог</p>
+        <p class="head" id="vHead">—</p>
+        <p class="sub" id="vSub1"></p>
+        <p class="sub" id="vSub2"></p>
+        <div class="levers" id="levers" hidden><h3 id="leversT">Что можно изменить</h3><ul id="leversUl"></ul></div>
+      </section>
+
+      <div class="metrics" id="metrics"></div>
+
+      <section class="panel" data-modes="budget">
+        <h2>Что дальше</h2>
+        <p class="tips" id="ctaText"></p>
+        <button type="button" class="cta" id="cta">Проверить такой объект на окупаемость</button>
+      </section>
+
+      <section class="panel" data-modes="rent">
+        <h2>Показатели для инвестора</h2>
+        <div class="tbl"><table><tbody id="proBox"></tbody></table></div>
+        <p class="tips">IRR считается по денежным потокам собственных средств: взнос и разовые расходы на старте, чистый доход за вычетом платежей по кредиту каждый год, продажа в конце срока за вычетом остатка долга. Налог на прибыль от продажи и страховые взносы ИП не учтены.</p>
+      </section>
+
+      <section class="panel" data-modes="rent self">
+        <h2>Банки под ваш расчёт</h2>
+        <div id="progsBox"></div>
+        <p class="tips" id="adNote" hidden>Реклама. Отмеченные «Партнёр» программы размещены на коммерческих условиях, это не влияет на расчёт и порядок в списке.</p>
+        <button type="button" class="btn" id="printBtn">Сохранить расчёт в PDF</button>
+      </section>
+
+      <section class="panel" data-modes="rent self">
+        <h2>Сверьте с объявлениями</h2>
+        <div id="m2box"></div>
+        <details class="more">
+          <summary>Чек-лист перед покупкой</summary>
+          <div>
+            <p>1. Найдите 5–10 похожих объявлений рядом и сравните цену за м² и аренду. Если ваш объект заметно дороже, расчёт будет слабее.</p>
+            <p>2. Считайте по реалистичному сценарию, а не по лучшему: с простоем, ремонтом, налогом и страховкой.</p>
+            <p>3. Осмотрите состояние объекта: коммуникации, электрика, ремонт. Всё это деньги, которые уменьшают доходность.</p>
+            <p>4. Подумайте, как быстро сможете продать или сдать объект, если деньги понадобятся срочно. У нежилых объектов это дольше, чем у квартир.</p>
+            <p>5. Проверьте документы и ограничения. Некоторые программы банков запрещают сдавать объект в аренду, уточняйте это до сделки.</p>
+          </div>
+        </details>
+        <details class="more">
+          <summary>Что значат эти числа</summary>
+          <div>
+            <p><b>Доходность объекта.</b> Чистый доход за год (после простоя, расходов и налога), делённый на цену. Показывает, сколько приносит объект, если купить его без кредита.</p>
+            <p><b>Окупаемость.</b> За сколько лет чистый доход вернёт цену объекта и разовые расходы. Рост цены и индексация аренды не учитываются.</p>
+            <p><b>Запас прочности.</b> На сколько процентов может упасть аренда, прежде чем придётся доплачивать к платежу по кредиту.</p>
+            <p><b>Сравнение со вкладом.</b> Для сравнения берём ключевую ставку как ориентир ставки по вкладу. Настоящие вклады обычно немного ниже, и проценты по ним тоже облагаются налогом.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" data-modes="rent">
+        <h2>Подробнее</h2>
+        <details class="more" open>
+          <summary>Куда уходит аренда за месяц</summary>
+          <div>
+            <div class="bar" id="bar" role="img" aria-label="Распределение аренды: расходы и налоги, платёж по кредиту, остаток">
+              <span class="s-cost" id="bCost"></span><span class="s-pay" id="bPay"></span><span class="s-rest" id="bRest"></span>
+              <div class="mark" id="bMark"></div>
+            </div>
+            <ul class="legend" id="legend"></ul>
+            <p class="bar-note" id="barNote"></p>
+          </div>
+        </details>
+        <p class="sub-h">Что будет при другой ставке</p>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Ставка</th><th>Платёж в месяц</th><th>Остаётся в месяц</th></tr></thead>
+            <tbody id="sens"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="fine">Расчёт ориентировочный и не является финансовой рекомендацией. Изучите все условия кредита на сайте банка. Оценивайте свои финансовые возможности и риски. Ставка в программах указана «от»: итоговую назначает банк индивидуально. Часть платежа по кредиту идёт на погашение основного долга, поэтому отрицательный остаток не равен убытку: вы доплачиваете, но объект остаётся у вас. Налоги считаются упрощённо, как процент от аренды. Рост цены объекта и индексацию аренды расчёт не учитывает.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// <calc>
+function annuity(loan, ratePct, years) {
+  var n = Math.round(years * 12);
+  if (loan <= 0 || n <= 0) return 0;
+  var i = ratePct / 1200;
+  if (i === 0) return loan / n;
+  return loan * i / (1 - Math.pow(1 + i, -n));
+}
+function payFactor(ratePct, years) { return annuity(1, ratePct, years); }
+function balanceAfter(loan, ratePct, years, m) {
+  var n = Math.round(years * 12);
+  if (loan <= 0 || m >= n) return 0;
+  var i = ratePct / 1200, pay = annuity(loan, ratePct, years);
+  if (i === 0) return Math.max(0, loan - pay * m);
+  var g = Math.pow(1 + i, m);
+  return Math.max(0, loan * g - pay * (g - 1) / i);
+}
+function rentCalc(s) {
+  var loan = Math.max(0, s.price * (1 - s.down / 100));
+  var upfrontCost = s.price * s.upfront / 100;
+  var ownMoney = s.price - loan + upfrontCost;
+  var months = Math.max(0, 12 - s.vac);
+  var annualRent = s.rent * months;
+  var costShare = Math.min(1, (s.exp + s.tax) / 100);
+  var noi = annualRent * (1 - costShare);
+  var noiM = noi / 12;
+  var pf = payFactor(s.rate, s.term);
+  var pay = loan * pf;
+  var cf = noiM - pay;
+  var m12 = Math.min(12, Math.round(s.term * 12));
+  var principalY1 = loan > 0 ? loan - balanceAfter(loan, s.rate, s.term, m12) : 0;
+  var r = {
+    loan: loan, upfrontCost: upfrontCost, ownMoney: ownMoney, months: months, costShare: costShare,
+    annualRent: annualRent, noi: noi, noiM: noiM, pay: pay, cf: cf,
+    incomeM: annualRent / 12, costM: annualRent / 12 * costShare,
+    totalPaid: pay * Math.round(s.term * 12),
+    principalY1: principalY1, interestY1: loan > 0 ? pay * m12 - principalY1 : 0,
+    yieldNet: s.price > 0 ? noi / s.price * 100 : 0,
+    payback: noi > 0 ? (s.price + upfrontCost) / noi : Infinity,
+    coverage: pay > 0 ? noiM / pay : null,
+    margin: (pay > 0 && noiM > 0) ? (1 - pay / noiM) * 100 : (pay > 0 ? -100 : null),
+    yearResult: loan > 0 ? cf * 12 : noi,
+    depositY: s.key != null && ownMoney > 0 ? ownMoney * s.key / 100 : null,
+    bePrice: null, beDown: null, beRent: null, beRate: null, rentFor120: null
+  };
+  var den = months * (1 - costShare);
+  if (loan > 0) {
+    if (pf > 0 && s.down < 100 && noiM > 0) r.bePrice = noiM / (pf * (1 - s.down / 100));
+    if (pf > 0 && s.price > 0 && noiM > 0) {
+      var loanBE = noiM / pf;
+      r.beDown = loanBE >= loan ? 0 : (1 - loanBE / s.price) * 100;
+    }
+    if (den > 0) { r.beRent = pay * 12 / den; r.rentFor120 = pay * 1.2 * 12 / den; }
+    var f = function (rt) { return annuity(loan, rt, s.term) * 12; };
+    if (f(0) > noi) r.beRate = 'never';
+    else if (f(60) <= noi) r.beRate = 'always';
+    else {
+      var lo = 0, hi = 60;
+      for (var k = 0; k < 60; k++) { var mid = (lo + hi) / 2; if (f(mid) > noi) hi = mid; else lo = mid; }
+      r.beRate = (lo + hi) / 2;
+    }
+  }
+  return r;
+}
+function rentVerdict(s, r) {
+  if (r.loan <= 0) {
+    if (r.noi <= 0) return { state: 'bad', head: 'Объект не приносит дохода', mini: 'Нет дохода' };
+    if (s.key == null) return { state: 'good', head: 'Кредит не нужен: объект окупится за ' + yrs(r.payback), mini: 'Без кредита' };
+    if (r.yieldNet >= s.key) return { state: 'good', head: 'Доходность выше вклада', mini: 'Выше вклада' };
+    if (r.yieldNet >= s.key * 0.75) return { state: 'warn', head: 'Доходность немного ниже вклада', mini: 'Чуть ниже вклада' };
+    return { state: 'bad', head: 'Вклад выгоднее, если цена объекта не вырастет', mini: 'Хуже вклада' };
+  }
+  if (r.coverage !== null && r.coverage >= 1.2) return { state: 'good', head: 'Объект уверенно платит за кредит', mini: 'Платит за себя' };
+  if (r.cf >= 0) return { state: 'warn', head: 'Платёж покрывается, но запас маленький', mini: 'Запас мал' };
+  if (r.noi >= r.interestY1) return { state: 'warn', head: 'Аренды не хватает на весь платёж', mini: 'Нужна доплата' };
+  return { state: 'bad', head: 'Доход ниже процентов по кредиту', mini: 'Невыгодно' };
+}
+function irr(flows) {
+  var npv = function (r) { var v = 0; for (var t = 0; t < flows.length; t++) v += flows[t] / Math.pow(1 + r, t); return v; };
+  var lo = -0.99, hi = 5;
+  if (npv(lo) * npv(hi) > 0) return null;
+  for (var k = 0; k < 100; k++) { var mid = (lo + hi) / 2; if (npv(lo) * npv(mid) <= 0) hi = mid; else lo = mid; }
+  return (lo + hi) / 2 * 100;
+}
+function proCalc(s, r) {
+  var hold = Math.max(1, Math.min(30, Math.round(s.hold || 1)));
+  var gR = (s.growR || 0) / 100, gP = (s.growP || 0) / 100, sc = (s.sellCost || 0) / 100;
+  var termM = Math.round(s.term * 12), debtY = r.pay * 12;
+  var sale = s.price * Math.pow(1 + gP, hold) * (1 - sc);
+  var bal = r.loan > 0 ? balanceAfter(r.loan, s.rate, s.term, Math.min(termM, hold * 12)) : 0;
+  var lev = [-r.ownMoney], un = [-(s.price + r.upfrontCost)], profit = 0;
+  for (var t = 1; t <= hold; t++) {
+    var noiT = r.noi * Math.pow(1 + gR, t - 1);
+    var ds = Math.min(termM, t * 12) > (t - 1) * 12 ? r.pay * (Math.min(termM, t * 12) - (t - 1) * 12) : 0;
+    var l = noiT - ds, u = noiT;
+    if (t === hold) { l += sale - bal; u += sale; }
+    lev.push(l); un.push(u);
+  }
+  lev.forEach(function (x) { profit += x; });
+  var grossY = s.rent * 12;
+  return {
+    hold: hold, sale: sale, balance: bal, profit: profit,
+    irrLev: irr(lev), irrUn: irr(un),
+    multiple: r.ownMoney > 0 ? (profit + r.ownMoney) / r.ownMoney : null,
+    cap: s.price > 0 ? r.noi / s.price * 100 : 0,
+    dscr: debtY > 0 ? r.noi / debtY : null,
+    ltv: s.price > 0 ? r.loan / s.price * 100 : 0,
+    debtYield: r.loan > 0 ? r.noi / r.loan * 100 : null,
+    coc: r.ownMoney > 0 ? (r.loan > 0 ? r.cf * 12 : r.noi) / r.ownMoney * 100 : null,
+    grm: grossY > 0 ? s.price / grossY : null,
+    beOcc: (debtY > 0 && grossY > 0 && r.costShare < 1) ? debtY / (grossY * (1 - r.costShare)) * 100 : null
+  };
+}
+function selfCalc(s) {
+  var loan = Math.max(0, s.price * (1 - s.down / 100));
+  var upfrontCost = s.price * s.upfront / 100;
+  var ownMoney = s.price - loan + upfrontCost;
+  var pay = loan * payFactor(s.rate, s.term);
+  var m12 = Math.min(12, Math.round(s.term * 12));
+  var principalY1 = loan > 0 ? loan - balanceAfter(loan, s.rate, s.term, m12) : 0;
+  var interestY1 = loan > 0 ? pay * m12 - principalY1 : 0;
+  var ownerY = s.price * s.ownCost / 100;
+  var oppY = s.key != null ? ownMoney * s.key / 100 : 0;
+  var econM = (interestY1 + ownerY + oppY) / 12;
+  return {
+    loan: loan, upfrontCost: upfrontCost, ownMoney: ownMoney, pay: pay,
+    principalM: principalY1 / 12, interestM: interestY1 / 12, ownerM: ownerY / 12, oppM: oppY / 12,
+    econM: econM, cashM: pay + ownerY / 12, diffM: s.rentNow - econM,
+    ratio: s.rentNow > 0 ? (s.rentNow - econM) / s.rentNow : null
+  };
+}
+function selfVerdict(s, r) {
+  if (!(s.rentNow > 0)) return { state: 'warn', head: 'Укажите, сколько стоит аренда такого помещения', mini: 'Нужна аренда' };
+  if (r.ratio > 0.05) return { state: 'good', head: 'Покупка обойдётся дешевле аренды', mini: 'Покупка дешевле' };
+  if (r.ratio >= -0.05) return { state: 'warn', head: 'Покупка и аренда обойдутся примерно одинаково', mini: 'Примерно поровну' };
+  return { state: 'bad', head: 'Аренда обойдётся дешевле покупки', mini: 'Аренда дешевле' };
+}
+function budgetCalc(s) {
+  var u = s.upfront / 100, dmin = Math.min(0.99, Math.max(0, s.minDown / 100));
+  var pf = payFactor(s.rate, s.term);
+  var out = { ok: false, price: 0, loan: 0, down: 0, downPct: 0, pay: 0, upfrontCost: 0, binding: null };
+  if (!(s.own > 0) || !(pf > 0)) return out;
+  var loanMax = s.payM > 0 ? s.payM / pf : 0;
+  var byPay = (loanMax + s.own) / (1 + u);
+  var byDown = s.own / (dmin + u);
+  var price = Math.min(byPay, byDown);
+  if (!(price > 0) || !isFinite(price)) return out;
+  var binding = byPay <= byDown ? 'payment' : 'down';
+  var down, loan;
+  if (binding === 'payment') { loan = loanMax; down = price - loan; }
+  else { down = dmin * price; loan = price - down; }
+  out.ok = true; out.price = price; out.loan = loan; out.down = down; out.downPct = down / price * 100;
+  out.pay = loan * pf; out.upfrontCost = u * price; out.binding = binding;
+  return out;
+}
+// </calc>
+
+// <match>
+var KIND_TYPES = {
+  flat: ['Квартира (вторичка)', 'Квартира (новостройка)', 'Дом / участок'],
+  shop: ['Коммерческое помещение'],
+  warehouse: ['Склад / ангар', 'Коммерческое помещение'],
+  production: ['Производственное помещение', 'Коммерческое помещение'],
+  garage: ['Гараж / машино-место']
+};
+function matchPrograms(kind, ctx, programs) {
+  var types = KIND_TYPES[kind] || [];
+  var out = [];
+  (programs || []).forEach(function (p) {
+    if (types.indexOf(p.object_type) < 0 || p.rate_min_pct == null) return;
+    var res = ctx.calc(p.rate_min_pct);
+    var flags = [];
+    if (p.down_min_pct != null) flags.push(ctx.down + 1e-9 >= p.down_min_pct ? { t: 'ok', x: 'Взнос подходит' } : { t: 'bad', x: 'Нужен взнос от ' + pct(p.down_min_pct) });
+    else flags.push({ t: 'warn', x: 'Взнос уточнить' });
+    if (p.term_max_years != null) flags.push(ctx.term <= p.term_max_years ? { t: 'ok', x: 'Срок подходит' } : { t: 'bad', x: 'Срок до ' + p.term_max_years + ' лет' });
+    if (p.amount_max != null && ctx.loan > p.amount_max) flags.push({ t: 'bad', x: 'Сумма выше лимита' });
+    if (p.amount_min != null && ctx.loan < p.amount_min) flags.push({ t: 'bad', x: 'Сумма ниже минимума' });
+    if (ctx.rental) {
+      if (p.rental_allowed === 'Да') flags.push({ t: 'ok', x: 'Сдача в аренду разрешена' });
+      else if (p.rental_allowed === 'Нет') flags.push({ t: 'bad', x: 'Сдача в аренду запрещена' });
+      else flags.push({ t: 'warn', x: 'Сдача в аренду: уточнить' });
+    }
+    out.push({ p: p, res: res, flags: flags, bad: flags.some(function (f) { return f.t === 'bad'; }) });
+  });
+  out.sort(function (a, b) {
+    if (a.bad !== b.bad) return a.bad ? 1 : -1;
+    return ctx.sort === 'cf' ? b.res.cf - a.res.cf : a.res.pay - b.res.pay;
+  });
+  return out;
+}
+// </match>
+
+var PRESETS = {
+  flat:       { price: 9000000,  area: 45,  rent: 55000,  vac: 1, exp: 10, tax: 13, down: 30, rate: 18.5, term: 20, upfront: 3, rentNow: 55000,  ownCost: 1.5, own: 3500000, payM: 60000,  minDown: 20 },
+  shop:       { price: 12000000, area: 60,  rent: 120000, vac: 2, exp: 8,  tax: 6,  down: 30, rate: 20,   term: 10, upfront: 5, rentNow: 120000, ownCost: 2,   own: 5000000, payM: 130000, minDown: 30 },
+  warehouse:  { price: 15000000, area: 300, rent: 165000, vac: 2, exp: 8,  tax: 6,  down: 30, rate: 20,   term: 10, upfront: 5, rentNow: 165000, ownCost: 2,   own: 6000000, payM: 160000, minDown: 30 },
+  production: { price: 25000000, area: 500, rent: 230000, vac: 2, exp: 10, tax: 6,  down: 30, rate: 20,   term: 10, upfront: 5, rentNow: 230000, ownCost: 2,   own: 9500000, payM: 250000, minDown: 30 },
+  garage:     { price: 1200000,  area: 20,  rent: 8000,   vac: 1, exp: 5,  tax: 13, down: 50, rate: 19,   term: 10, upfront: 3, rentNow: 8000,   ownCost: 1,   own: 800000,  payM: 12000,  minDown: 30 }
+};
+for (var pk in PRESETS) { PRESETS[pk].growR = 5; PRESETS[pk].growP = 4; PRESETS[pk].hold = 7; PRESETS[pk].sellCost = 2; }
+var PARTNERS = {}; // 'Сбербанк': {url: 'https://…партнёрская ссылка с erid…', label: 'Подать заявку'}
+var KIND_HINTS = {
+  flat: 'Для сдачи квартиры в аренду проверьте условия банка: по льготным программам сдача жилья может быть ограничена.',
+  shop: 'Магазины, офисы, помещения под услуги. Кредиты на нежилые помещения обычно дороже, чем на квартиры.',
+  warehouse: 'Ставки аренды сильно зависят от региона и класса объекта, поэтому берите цифры из объявлений рядом.',
+  production: 'Проверьте мощность электросети и разрешённое использование: от этого зависит, кому можно сдавать.',
+  garage: 'Гараж дешевле остальных объектов, но и аренда небольшая. Банки кредитуют его отдельными программами, часто с более высоким взносом.'
+};
+var GOAL_NOTES = {
+  rent: 'Вы покупаете объект, чтобы сдавать его. Калькулятор покажет, хватит ли аренды на платёж по кредиту и сколько своих денег понадобится на старте.',
+  self: 'Вам нужно помещение для своего дела. Калькулятор сравнит, что обойдётся дешевле: купить в кредит или снимать такое же.',
+  budget: 'Вы знаете, сколько у вас денег и какой платёж комфортен, но не знаете, какой объект искать. Калькулятор покажет максимальную цену.'
+};
+var IDS = ['price', 'area', 'rent', 'vac', 'exp', 'tax', 'down', 'rate', 'term', 'upfront', 'rentNow', 'ownCost', 'own', 'payM', 'minDown', 'growR', 'growP', 'hold', 'sellCost'];
+var MODE = 'rent';
+var MARKET; // undefined: данные ещё грузятся, null: загрузить не удалось
+var KEY_MAX_AGE = 3;
+var PROG_MAX_AGE = 14;
+
+var $ = function (id) { return document.getElementById(id); };
+var nf = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+function num(n) { return nf.format(Math.round(Math.abs(n))); }
+function rub(n) { return (Math.round(n) < 0 ? '−' : '') + num(n) + ' ₽'; }
+function rubTo(n, step) { return rub(Math.round(n / step) * step); }
+function floorTo(n, step) { return Math.floor(n / step) * step; }
+function ceilTo(n, step) { return Math.ceil(n / step) * step; }
+function pp(n) { return String(Math.round(n * 10) / 10).replace('.', ','); }
+function pr(n) { return String(Math.round(n * 100) / 100).replace('.', ',').replace('-', '−') + '%'; }
+function pct(n) { return pp(n).replace('-', '−') + '%'; }
+function plural(n, f) {
+  var a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return f[2];
+  if (b > 1 && b < 5) return f[1];
+  if (b === 1) return f[0];
+  return f[2];
+}
+function yrs(n) {
+  if (!isFinite(n)) return 'никогда';
+  var v = Math.round(n * 10) / 10;
+  var txt = String(v).replace('.', ',') + ' ';
+  return txt + (v === Math.round(v) ? plural(v, ['год', 'года', 'лет']) : 'года');
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function dmy(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  return m ? m[3] + '.' + m[2] + '.' + m[1] : '—';
+}
+function daysSince(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  if (!m) return null;
+  var n = new Date();
+  var diff = Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 86400000);
+  return diff < 0 ? 0 : diff;
+}
+function progStale(p) { var a = daysSince(p.checked); return a === null || a > PROG_MAX_AGE; }
+function kind() { var el = document.querySelector('input[name="kind"]:checked'); return el ? el.value : 'warehouse'; }
+function read() {
+  var s = {};
+  IDS.forEach(function (id) { var v = parseFloat($(id).value); s[id] = isFinite(v) && (v >= 0 || id === 'growR' || id === 'growP') ? v : 0; });
+  s.vac = Math.min(12, s.vac);
+  s.key = keyValue();
+  return s;
+}
+function load(p) { IDS.forEach(function (id) { $(id).value = p[id]; }); }
+function keyValue() { return MARKET && MARKET.key_rate && MARKET.key_rate.value_pct != null ? MARKET.key_rate.value_pct : null; }
+function withRate(s, rate) { var t = {}; for (var k in s) t[k] = s[k]; t.rate = rate; return t; }
+function M(k, v, n, cls) { return { k: k, v: v, n: n, cls: cls || '' }; }
+
+// Свежесть считается здесь, по сегодняшней дате, а не берётся из файла:
+// если ежедневное обновление встанет, страница сама покажет, что данные устарели.
+function keyRateState(kr) {
+  if (!kr || kr.value_pct == null) return { fresh: false, why: 'Не удалось получить ключевую ставку Банка России. Сверьте её на cbr.ru.' };
+  if (kr.status === 'conflict') return { fresh: false, why: 'Источники Банка России дали разные значения. Сверьте ставку на cbr.ru.' };
+  var age = daysSince(kr.confirmed_at);
+  if (age === null) return { fresh: false, why: 'Неизвестно, когда ставка подтверждалась. Сверьте её на cbr.ru.' };
+  if (age > KEY_MAX_AGE) return { fresh: false, why: 'Ставка не подтверждалась ' + age + ' ' + plural(age, ['день', 'дня', 'дней']) + '. Сверьте её на cbr.ru.' };
+  return { fresh: true };
+}
+function lowestRate(k) {
+  if (!MARKET || !MARKET.programs) return null;
+  var types = KIND_TYPES[k] || [], best = null, count = 0;
+  MARKET.programs.forEach(function (p) {
+    if (types.indexOf(p.object_type) < 0 || p.rate_min_pct == null) return;
+    count++;
+    if (best === null || p.rate_min_pct < best) best = p.rate_min_pct;
+  });
+  return best === null ? null : { rate: best, count: count };
+}
+
+function renderMarket(k) {
+  var kr = MARKET && MARKET.key_rate;
+  if (!MARKET) {
+    $('tKey').textContent = '—';
+    $('tKeyN').innerHTML = '<span class="w">Данные рынка не загрузились. Калькулятор работает без подбора банков.</span>';
+    $('tBest').textContent = '—'; $('tBestN').textContent = ''; $('tGen').textContent = '—'; $('tGenN').textContent = '';
+    return;
+  }
+  var st = keyRateState(kr);
+  if (kr && kr.value_pct != null) {
+    $('tKey').textContent = pct(kr.value_pct);
+    var lines = [];
+    if (kr.last_meeting && kr.last_meeting.date) lines.push('Заседание ' + dmy(kr.last_meeting.date) + ': ставка ' + esc(kr.last_meeting.decision || 'не изменена') + '.');
+    if (kr.effective_since) lines.push('Действует с ' + dmy(kr.effective_since) + '.');
+    if (kr.confirmed_at) lines.push('Проверено ' + dmy(kr.confirmed_at) + ' по данным Банка России.');
+    var html = lines.map(function (l) { return '<span>' + l + '</span>'; }).join('');
+    if (!st.fresh) html += '<span class="w">' + st.why + '</span>';
+    $('tKeyN').innerHTML = html;
+  } else {
+    $('tKey').textContent = 'нет данных';
+    $('tKeyN').innerHTML = '<span class="w">' + st.why + '</span>';
+  }
+  var low = lowestRate(k);
+  $('tBestK').textContent = 'Самая низкая ставка для этого типа';
+  if (low) {
+    $('tBest').textContent = pr(low.rate);
+    var kv = kr && kr.value_pct != null ? kr.value_pct : null;
+    $('tBestN').textContent = (kv != null ? 'На ' + pp(low.rate - kv) + ' п.п. выше ключевой. ' : '') + 'Программ в базе: ' + low.count;
+  } else {
+    $('tBest').textContent = '—';
+    $('tBestN').textContent = 'Для этого типа в базе пока нет программ банков.';
+  }
+  if (MARKET.generated_at) {
+    var d = new Date(MARKET.generated_at);
+    $('tGen').textContent = isNaN(d) ? '—' : d.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' });
+    var old = (MARKET.programs || []).filter(progStale).length;
+    $('tGenN').textContent = old ? 'Условий, которые давно не проверялись: ' + old : 'Условия банков проверялись недавно';
+  }
+}
+
+function setVerdict(state, head, subs, leversTitle, levers) {
+  $('verdict').dataset.state = state;
+  $('vHead').textContent = head;
+  $('vSub1').textContent = subs[0] || ''; $('vSub1').hidden = !subs[0];
+  $('vSub2').textContent = subs[1] || ''; $('vSub2').hidden = !subs[1];
+  var has = levers && levers.length;
+  $('levers').hidden = !has;
+  if (has) {
+    $('leversT').textContent = leversTitle;
+    $('leversUl').innerHTML = levers.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('');
+  }
+}
+function setMini(state, t, c) { $('mini').dataset.state = state; $('miniT').textContent = t; $('miniC').textContent = c; }
+function setMetrics(list) {
+  $('metrics').innerHTML = list.map(function (m) {
+    return '<div class="panel metric"><p class="k">' + esc(m.k) + '</p><p class="v num ' + m.cls + '">' + esc(m.v) + '</p><p class="n">' + esc(m.n) + '</p></div>';
+  }).join('');
+}
+
+function renderProgs(k, ctx) {
+  var box = $('progsBox');
+  if (MARKET === undefined) { box.innerHTML = '<p class="empty">Загружаю данные банков…</p>'; return; }
+  if (!MARKET) { box.innerHTML = '<p class="empty">Данные банков не загрузились, подбор недоступен. Обновите страницу или попробуйте позже.</p>'; return; }
+  if (ctx.loan <= 0) { box.innerHTML = '<p class="empty">Без кредита банки не нужны. Чтобы увидеть программы, уменьшите первоначальный взнос.</p>'; return; }
+  $('adNote').hidden = !Object.keys(PARTNERS).length;
+  var list = matchPrograms(k, ctx, MARKET.programs);
+  if (!list.length) { box.innerHTML = '<p class="empty">Для этого типа объекта в базе пока нет программ банков. Условия добавляются по мере проверки.</p>'; return; }
+  var label = ctx.sort === 'cf' ? 'остаётся в месяц' : 'платёж в месяц';
+  box.innerHTML = '<ul class="progs">' + list.map(function (m) {
+    var p = m.p, r = m.res;
+    var url = /^https?:\/\//.test(p.source_url || '') ? p.source_url : '';
+    var chips = m.flags.map(function (f) { return '<span class="chip ' + f.t + '">' + esc(f.x) + '</span>'; }).join('');
+    if (PARTNERS[p.bank]) chips += '<span class="chip ad">Партнёр</span>';
+    if (p.verification === 'changed') chips += '<span class="chip bad">На источнике ставка уже ' + (p.source_rate_pct != null ? pr(p.source_rate_pct) : 'другая') + '</span>';
+    else if (progStale(p)) chips += '<span class="chip warn">Данные могли устареть</span>';
+    var big = ctx.sort === 'cf' ? r.cf : r.pay;
+    return '<li class="prog' + (m.bad ? ' dim' : '') + '">' +
+      '<div><h3>' + esc(p.bank) + '</h3><p class="psub">' + esc(p.name) + '</p></div>' +
+      '<div class="cf"><b class="' + (ctx.sort === 'cf' ? (big < 0 ? 'neg' : 'pos') : '') + '">' + rub(big) + '</b><small>' + label + '</small></div>' +
+      '<div class="rest"><div class="chips">' + chips + '</div>' +
+      '<p class="cond"><b class="num">от ' + pr(p.rate_min_pct) + '</b>, платёж <span class="num">' + rub(r.pay) + '</span> в месяц.' +
+        (p.rate_conditions ? ' ' + esc(p.rate_conditions) : '') + '</p>' +
+      '<div class="foot"><button class="btn" type="button" data-rate="' + p.rate_min_pct + '">Подставить ставку</button>' +
+        (PARTNERS[p.bank] && /^https:\/\//.test(PARTNERS[p.bank].url) ? '<a class="btn solid" href="' + esc(PARTNERS[p.bank].url) + '" target="_blank" rel="sponsored noopener noreferrer">' + esc(PARTNERS[p.bank].label || 'Подать заявку') + '</a>' : '') +
+        '<span>' + (p.verification === 'ok' ? 'Сверено с источником ' : 'Данные от ') + dmy(p.checked) + '</span>' +
+        (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">Источник</a>' : '') + '</div></div></li>';
+  }).join('') + '</ul>';
+}
+
+function renderM2(s, rentValue) {
+  var box = $('m2box');
+  if (!(s.area > 0)) {
+    box.innerHTML = '<p class="tips">Укажите площадь, и здесь появятся цена и аренда за м² для сверки с объявлениями.</p>';
+    return;
+  }
+  box.innerHTML = '<div class="compare"><div><p class="k">Цена за м²</p><p class="v num">' + rub(s.price / s.area) + '</p></div>' +
+    '<div><p class="k">Аренда за м² в месяц</p><p class="v num">' + rub(rentValue / s.area) + '</p></div></div>' +
+    '<p class="tips">Откройте объявления о похожих объектах рядом и сравните эти цифры. Если ваш объект заметно дороже, а аренда ниже, расчёт получается слабее.</p>';
+}
+
+function renderRent(s) {
+  var r = rentCalc(s), v = rentVerdict(s, r);
+  var hasLoan = r.loan > 0;
+  var sub1 = hasLoan
+    ? (r.cf >= 0 ? 'После платежа по кредиту остаётся ' + rub(r.cf) + ' в месяц.' : 'Каждый месяц придётся доплачивать ' + rub(-r.cf) + ' из своих средств.')
+    : 'Чистый доход после налога, расходов и простоя: ' + rub(r.noiM) + ' в месяц.';
+  var sub2 = '';
+  if (r.depositY != null) {
+    sub2 = 'Ваши ' + rubTo(r.ownMoney, 1000) + ' на вкладе под ' + pct(s.key) + ' принесли бы около ' + rubTo(r.depositY, 1000) + ' в год. Здесь за год получится ' + rubTo(r.yearResult, 1000) +
+      (hasLoan && r.yearResult < 0 ? ' (вы доплачиваете), но около ' + rubTo(r.principalY1, 1000) + ' из платежей уходит на погашение долга.' : '.');
+  }
+  var levers = [];
+  if (hasLoan && r.cf < 0) {
+    if (r.bePrice != null && r.bePrice < s.price) levers.push('Объект выйдет в ноль, если цена будет не выше ' + rub(floorTo(r.bePrice, 10000)) + ' (сейчас ' + rub(s.price) + '). Попробуйте торговаться или поищите дешевле.');
+    if (r.beDown != null && r.beDown > s.down && r.beDown <= 100) levers.push('Или если первоначальный взнос будет не меньше ' + pct(ceilTo(r.beDown, 0.1)) + ' (сейчас ' + pct(s.down) + ').');
+    if (r.beRent != null) levers.push('Или если аренда будет не ниже ' + rub(ceilTo(r.beRent, 1000)) + ' в месяц (сейчас ' + rub(s.rent) + '). Проверьте по объявлениям, реальна ли такая цена.');
+    if (r.beRate === 'never') levers.push('Даже при нулевой ставке аренды не хватит на платёж: нужен больший взнос или другой объект.');
+    else if (typeof r.beRate === 'number') levers.push('Или если ставка по кредиту будет около ' + pct(r.beRate) + ' (сейчас ' + pct(s.rate) + ').');
+  } else if (hasLoan && r.coverage !== null && r.coverage < 1.2 && r.rentFor120 != null) {
+    levers.push('Чтобы платёж покрывался с запасом 20%, аренда должна быть не ниже ' + rub(ceilTo(r.rentFor120, 1000)) + ' в месяц (сейчас ' + rub(s.rent) + ').');
+    levers.push('Запас нужен на случай простоя, ремонта и роста расходов.');
+  }
+  setVerdict(v.state, v.head, [sub1, sub2], 'Что можно изменить', levers);
+  setMini(v.state, v.mini, (hasLoan ? (r.cf >= 0 ? '+' : '') + rub(r.cf) : rub(r.noiM)) + '/мес');
+
+  var cfVal = hasLoan ? r.cf : r.noiM;
+  var down = s.price - r.loan;
+  var yieldNote = s.key != null
+    ? 'в год от цены. Ключевая ставка ' + pct(s.key) + ': доходность ' + (r.yieldNet >= s.key ? 'выше на ' : 'ниже на ') + pp(Math.abs(r.yieldNet - s.key)) + ' п.п.'
+    : 'в год от цены';
+  var margin;
+  if (!hasLoan) margin = M('Запас прочности', '—', 'кредита нет, платить банку нечего');
+  else if (r.margin >= 0) margin = M('Запас прочности', pct(r.margin), 'на столько аренда может упасть, и платёж ещё будет покрываться', 'pos');
+  else margin = M('Запас прочности', pct(r.margin), 'на столько аренды не хватает до платежа по кредиту', 'neg');
+  setMetrics([
+    M('Платёж по кредиту', hasLoan ? rub(r.pay) : '—', hasLoan ? 'в месяц. За весь срок вы отдадите банку ' + rubTo(r.totalPaid, 1000) : 'кредита нет'),
+    M('Остаётся в месяц', rub(cfVal), hasLoan ? 'после платежа, налога, расходов и простоя' : 'после налога, расходов и простоя', cfVal < 0 ? 'neg' : 'pos'),
+    M('Деньги на старте', rub(r.ownMoney), 'взнос ' + rubTo(down, 1000) + ' и разовые расходы ' + rubTo(r.upfrontCost, 1000)),
+    M('Доходность объекта', pct(r.yieldNet), yieldNote),
+    M('Окупаемость', yrs(r.payback), 'без кредита, с учётом разовых расходов'),
+    margin
+  ]);
+
+  renderProgs(kind(), { loan: r.loan, down: s.down, term: s.term, rental: true, sort: 'cf',
+    calc: function (rt) { var q = rentCalc(withRate(s, rt)); return { pay: q.pay, cf: q.cf }; } });
+  renderM2(s, s.rent);
+  renderPro(s, r);
+
+  var total = Math.max(r.incomeM, r.costM + r.pay) || 1;
+  var rest = Math.max(0, r.incomeM - r.costM - r.pay);
+  $('bCost').style.width = (r.costM / total * 100) + '%';
+  $('bPay').style.width = (r.pay / total * 100) + '%';
+  $('bRest').style.width = (rest / total * 100) + '%';
+  $('bMark').style.left = 'calc(' + Math.min(100, r.incomeM / total * 100) + '% - 1px)';
+  var lg = [['var(--bar-cost)', 'Налоги и расходы', r.costM], ['var(--accent)', 'Платёж по кредиту', r.pay]];
+  if (rest > 0) lg.push(['var(--good)', 'Остаётся', rest]);
+  $('legend').innerHTML = lg.map(function (x) {
+    return '<li><i style="background:' + x[0] + '"></i><span>' + x[1] + ' <b class="num">' + num(x[2]) + ' ₽</b></span></li>';
+  }).join('');
+  var gap = r.costM + r.pay - r.incomeM;
+  $('barNote').textContent = 'Вертикальная черта: средняя аренда за месяц с учётом простоя, ' + rub(r.incomeM) + '.' + (gap > 0 ? ' Не хватает ' + rub(gap) + '.' : '');
+
+  var rates = [10, 12, 14, 16, 18, 20, 22];
+  var cur = Math.round(s.rate * 10) / 10;
+  if (rates.indexOf(cur) < 0) { rates.push(cur); rates.sort(function (a, b) { return a - b; }); }
+  $('sens').innerHTML = rates.map(function (rt) {
+    var q = rentCalc(withRate(s, rt));
+    var c = q.loan > 0 ? q.cf : q.noiM;
+    return '<tr class="' + (rt === cur ? 'cur' : '') + '"><td class="num">' + pct(rt) + (rt === cur ? ' (ваша)' : '') + '</td>' +
+      '<td class="num">' + (q.loan > 0 ? num(q.pay) + ' ₽' : '—') + '</td>' +
+      '<td class="num ' + (c < 0 ? 'neg' : 'pos') + '">' + rub(c) + '</td></tr>';
+  }).join('');
+}
+
+function renderPro(s, r) {
+  var q = proCalc(s, r), f1 = function (x) { return x == null || !isFinite(x) ? '—' : pct(x); };
+  var rows = [
+    ['IRR на собственные средства', f1(q.irrLev), 'за ' + q.hold + ' ' + plural(q.hold, ['год', 'года', 'лет']) + ', с ростом аренды и продажей'],
+    ['IRR без кредита', f1(q.irrUn), 'для сравнения: рычаг ' + (q.irrLev != null && q.irrUn != null ? (q.irrLev > q.irrUn ? 'повышает' : 'снижает') + ' доходность' : '—')],
+    ['Прибыль за срок', rub(q.profit), 'кратность вложенных денег ' + (q.multiple == null ? '—' : pp(q.multiple) + 'x')],
+    ['Cap rate', pct(q.cap), 'NOI / цена'],
+    ['NOI в год', rub(r.noi), 'после простоя, расходов и налога, до платежей по кредиту'],
+    ['DSCR', q.dscr == null ? '—' : pp(Math.round(q.dscr * 100) / 100) + 'x', 'NOI / платежи по кредиту за год. Банки обычно ждут 1,2 и выше'],
+    ['Cash-on-cash', f1(q.coc), 'денежный поток за год / вложенные деньги'],
+    ['LTV', pct(q.ltv), 'кредит / цена'],
+    ['Debt yield', f1(q.debtYield), 'NOI / кредит'],
+    ['Безубыточная заполняемость', f1(q.beOcc), 'доля потенциальной аренды, при которой NOI покрывает платёж'],
+    ['GRM', q.grm == null ? '—' : pp(q.grm) + 'x', 'цена / валовая аренда за год'],
+    ['Цена продажи через ' + q.hold, rubTo(q.sale, 10000), 'за вычетом расходов; остаток долга ' + rubTo(q.balance, 10000)]
+  ];
+  $('proBox').innerHTML = rows.map(function (x) {
+    return '<tr><td class="pk">' + esc(x[0]) + '<small>' + esc(x[2]) + '</small></td><td class="num" style="text-align:right;white-space:nowrap">' + esc(x[1]) + '</td></tr>';
+  }).join('');
+}
+
+function renderSelf(s) {
+  var r = selfCalc(s), v = selfVerdict(s, r);
+  var hasLoan = r.loan > 0;
+  var subs = [];
+  if (s.rentNow > 0) {
+    subs.push('В среднем за первый год покупка обходится в ' + rub(r.econM) + ' в месяц, аренда в ' + rub(s.rentNow) + '.');
+    subs.push('На старте понадобится ' + rubTo(r.ownMoney, 1000) + ' своих денег.' + (hasLoan ? ' Из платежа банку около ' + rubTo(r.principalM, 100) + ' в месяц уходит на погашение долга: это не расход, а выкуп помещения.' : ''));
+  }
+  setVerdict(v.state, v.head, subs, 'Что учесть', [
+    'Аренда со временем дорожает, а цена помещения может измениться. Расчёт этого не учитывает.',
+    'Если бизнес только начинается, аренда оставляет деньги в деле и позволяет сменить место. Покупка привязывает к помещению.'
+  ]);
+  var ab = Math.abs(r.diffM);
+  setMini(v.state, v.mini, v.state === 'warn' ? '≈' : 'на ' + rub(ab) + '/мес');
+  setMetrics([
+    M('Покупка обойдётся', rub(r.econM), 'в месяц: проценты банку, расходы владельца' + (s.key != null ? ' и доход, который принесли бы ваши деньги на вкладе' : '')),
+    M('Аренда', rub(s.rentNow), 'в месяц за такое же помещение'),
+    M('Платёж банку', hasLoan ? rub(r.pay) : '—', hasLoan ? 'в месяц, из них около ' + rubTo(r.principalM, 100) + ' идёт на погашение долга' : 'кредита нет'),
+    M('Расходы владельца', rub(r.ownerM), 'в месяц: налог на имущество, ремонт, страховка'),
+    M('Каждый месяц из кармана', rub(r.cashM), 'платёж банку и расходы владельца' + (s.rentNow > 0 ? (r.cashM > s.rentNow ? '. Это больше аренды на ' + rubTo(r.cashM - s.rentNow, 100) : '. Это меньше аренды на ' + rubTo(s.rentNow - r.cashM, 100)) : '')),
+    M('Деньги на старте', rub(r.ownMoney), 'взнос ' + rubTo(s.price - r.loan, 1000) + ' и разовые расходы ' + rubTo(r.upfrontCost, 1000))
+  ]);
+  renderProgs(kind(), { loan: r.loan, down: s.down, term: s.term, rental: false, sort: 'pay',
+    calc: function (rt) { var q = selfCalc(withRate(s, rt)); return { pay: q.pay, cf: 0 }; } });
+  renderM2(s, s.rentNow);
+}
+
+function renderBudget(s) {
+  var b = budgetCalc(s);
+  if (!b.ok) {
+    setVerdict('bad', 'Укажите свои деньги и комфортный платёж', ['Без этих двух цифр посчитать нельзя.'], '', []);
+    setMini('bad', 'Нужен бюджет', '—');
+    setMetrics([]);
+    $('ctaText').textContent = ''; $('cta').hidden = true;
+    return;
+  }
+  $('cta').hidden = false;
+  var s2 = {}; for (var k in s) s2[k] = s[k];
+  var gainOwn = budgetCalc(Object.assign({}, s, { own: s.own + 100000 })).price - b.price;
+  var gainPay = budgetCalc(Object.assign({}, s, { payM: s.payM + 10000 })).price - b.price;
+  var lim = b.binding === 'payment'
+    ? 'Вас ограничивает платёж: при ' + rub(s.payM) + ' в месяц банк даст около ' + rubTo(b.loan, 10000) + '.'
+    : 'Вас ограничивает первоначальный взнос: ' + pct(s.minDown) + ' цены нужно иметь своими, а это ' + rubTo(b.down, 10000) + '.';
+  var more = b.binding === 'payment'
+    ? 'Каждые +100 000 ₽ своих денег добавляют к цене около ' + rubTo(gainOwn, 10000) + ', а каждые +10 000 ₽ к платежу около ' + rubTo(gainPay, 10000) + '.'
+    : 'Больший платёж не поможет, вы упираетесь во взнос. Каждые +100 000 ₽ своих денег добавляют к цене около ' + rubTo(gainOwn, 10000) + '.';
+  setVerdict('good', 'С таким бюджетом подойдут объекты до ' + rubTo(b.price, 10000), [lim, more], '', []);
+  setMini('good', 'Объект до', rubTo(b.price, 10000));
+  var months = Math.max(0, 12 - s.vac), costShare = Math.min(1, (s.exp + s.tax) / 100), den = months * (1 - costShare);
+  var beRent = den > 0 ? b.pay * 12 / den : null;
+  setMetrics([
+    M('Объект до', rubTo(b.price, 10000), 'максимальная цена при вашем бюджете'),
+    M('Кредит', rub(b.loan), 'под ' + pct(s.rate) + ' на ' + s.term + ' ' + plural(s.term, ['год', 'года', 'лет'])),
+    M('Первоначальный взнос', rub(b.down), pct(b.downPct) + ' от цены'),
+    M('Платёж в месяц', rub(b.pay), 'при комфортных ' + rub(s.payM)),
+    M('Разовые расходы', rub(b.upfrontCost), pct(s.upfront) + ' от цены: оформление, оценка, ремонт'),
+    M('Аренда, чтобы объект платил за себя', beRent != null ? rub(ceilTo(beRent, 1000)) : '—',
+      'в месяц, при простое ' + pp(s.vac) + ' мес., расходах ' + pp(s.exp) + '% и налоге ' + pp(s.tax) + '%. Эти цифры можно поменять в сценарии «Купить и сдавать»')
+  ]);
+  $('ctaText').textContent = 'Нашли подходящий объект? Подставим эти цифры в калькулятор окупаемости. Останется ввести реальную аренду из объявлений: мы подставим минимальную, при которой объект платит за себя.';
+}
+
+function syncUi(s) {
+  var k = kind();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-modes]'), function (el) {
+    el.hidden = el.getAttribute('data-modes').split(' ').indexOf(MODE) < 0;
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.goal'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-mode') === MODE ? 'true' : 'false'); });
+  $('goalNote').textContent = GOAL_NOTES[MODE];
+  $('kindHint').textContent = KIND_HINTS[k];
+  $('taxSelfBtn').hidden = k !== 'flat';
+  Array.prototype.forEach.call(document.querySelectorAll('#taxChips .chipbtn'), function (b) {
+    b.setAttribute('aria-pressed', String(parseFloat(b.getAttribute('data-tax')) === s.tax));
+  });
+  $('downO').textContent = pct(s.down) + ' · ' + rub(s.price * s.down / 100);
+  $('rateO').textContent = pct(s.rate);
+  $('termO').textContent = s.term + ' ' + plural(s.term, ['год', 'года', 'лет']);
+  var low = lowestRate(k), parts = [];
+  if (s.key != null) parts.push('Ключевая ставка ' + pct(s.key) + '.');
+  if (low) parts.push('Самая низкая ставка в нашей базе для этого типа: ' + pr(low.rate) + '.');
+  parts.push('Ставки по кредитам на недвижимость обычно заметно выше ключевой.');
+  $('rateHelp').textContent = parts.join(' ');
+}
+
+function render() {
+  var s = read();
+  syncUi(s);
+  renderMarket(kind());
+  if (MODE === 'rent') renderRent(s);
+  else if (MODE === 'self') renderSelf(s);
+  else renderBudget(s);
+}
+function setMode(m) { MODE = m; render(); }
+
+IDS.forEach(function (id) { $(id).addEventListener('input', render); });
+Array.prototype.forEach.call(document.querySelectorAll('input[name="kind"]'), function (el) {
+  el.addEventListener('change', function () { load(PRESETS[el.value]); render(); });
+});
+Array.prototype.forEach.call(document.querySelectorAll('.goal'), function (b) {
+  b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+});
+Array.prototype.forEach.call(document.querySelectorAll('#taxChips .chipbtn'), function (b) {
+  b.addEventListener('click', function () { $('tax').value = b.getAttribute('data-tax'); render(); });
+});
+$('printBtn').addEventListener('click', function () { try { window.print(); } catch (e) {} });
+$('noLoan').addEventListener('click', function () { $('down').value = 100; render(); });
+$('progsBox').addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button[data-rate]') : null;
+  if (!b) return;
+  var v = parseFloat(b.getAttribute('data-rate'));
+  if (isFinite(v)) { $('rate').value = Math.min(35, Math.max(1, v)); render(); }
+});
+$('cta').addEventListener('click', function () {
+  var s = read(), b = budgetCalc(s);
+  if (!b.ok) return;
+  var months = Math.max(0, 12 - s.vac), den = months * (1 - Math.min(1, (s.exp + s.tax) / 100));
+  $('price').value = floorTo(b.price, 10000);
+  $('down').value = Math.max(0, Math.min(100, Math.round(b.downPct)));
+  if (den > 0) $('rent').value = ceilTo(b.pay * 12 / den, 1000);
+  setMode('rent');
+  try { $('goals').scrollIntoView({ block: 'start' }); } catch (e) {}
+});
+
+load(PRESETS[kind()]);
+render();
+fetch('data/market.json', { cache: 'no-store' })
+  .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+  .then(function (data) { MARKET = data; render(); })
+  .catch(function () { MARKET = null; render(); });
+</script>
+
+</body>
+</html>
