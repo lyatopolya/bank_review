@@ -1,48 +1,48 @@
 {
-  "verified_on": "2026-10-30",
+  "verified_on": "2026-10-31",
   "sources": {
     "https://finuslugi.ru/ipoteka/sberbank_kommercheskaya_ipoteka": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "unsupported",
       "found_rate_pct": null
     },
     "https://ru.myfin.by/bank/alfabank/ipoteka/kommerceskaa-nedvizimost-13": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 19.59
     },
     "https://ru.myfin.by/bank/sovcombank/ipoteka/kommerceskaa-nedvizimost-na-vtoricnom-rynke": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 19.99
     },
     "https://ru.myfin.by/bank/sberbank/ipoteka/kredit-na-garaz-ili-masino-mesto": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 18.4
     },
     "https://ru.myfin.by/bank/alfabank/ipoteka/masino-mesto-2": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 17.99
     },
     "https://ru.myfin.by/bank/sovcombank/ipoteka/pokupka-zila-na-vtoricnom-rynke": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 17.49
     },
     "https://ru.myfin.by/bank/tcs/ipoteka/kvartira-na-vtoricnom-rynke-3": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 16.9
     },
     "https://ru.myfin.by/bank/alfabank/ipoteka/kredit-na-kvartiru": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "ok",
       "found_rate_pct": 17.99
     },
     "https://www.sravni.ru/ipoteka/kommercheskaja": {
-      "checked_at": "2026-10-30",
+      "checked_at": "2026-10-31",
       "status": "unsupported",
       "found_rate_pct": null
     }
